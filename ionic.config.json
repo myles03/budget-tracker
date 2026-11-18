@@ -1,0 +1,7 @@
+{
+  "name": "smart-budget",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
