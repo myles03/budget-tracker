@@ -1,0 +1,374 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar
+    class="custom-header"
+    [class.theme-dark]="darkMode"
+    [class.theme-green]="institutionTheme === 'green'"
+    [class.theme-burgundy]="institutionTheme === 'burgundy'"
+  >
+    <ion-title>
+      <div class="header-title">
+        <ion-icon name="wallet-outline"></ion-icon>
+        <span>SmartBudget</span>
+      </div>
+    </ion-title>
+    @if (currentUser) {
+    <ion-buttons slot="end">
+      <ion-button (click)="logout()">Log out</ion-button>
+    </ion-buttons>
+    }
+  </ion-toolbar>
+</ion-header>
+
+<ion-content
+  class="ion-padding"
+  [class.theme-dark]="darkMode"
+  [class.theme-green]="institutionTheme === 'green'"
+  [class.theme-burgundy]="institutionTheme === 'burgundy'"
+>
+  <!-- Authentication -->
+  @if (sessionRestoring) {
+  <div class="setup-container" role="status" aria-live="polite">
+    <div class="setup-card">
+      <h2>Restoring your session</h2>
+      <p class="subtitle">Please wait while we check your sign-in.</p>
+    </div>
+  </div>
+  } @else if (!currentUser) {
+  <div class="setup-container">
+    <div class="setup-card">
+      <div class="auth-header">
+        <ion-icon class="auth-logo" name="wallet-outline"></ion-icon>
+        <h2>Welcome to SmartBudget</h2>
+        <p class="subtitle">Sign in to track your budget and expenses.</p>
+        @if (sessionRestoreError) {
+        <p class="conversion-error" role="alert">{{ sessionRestoreError }}</p>
+        }
+      </div>
+
+      <ion-segment [(ngModel)]="authMode" class="auth-segment">
+        <ion-segment-button value="login">Log In</ion-segment-button>
+        <ion-segment-button value="signup">Sign Up</ion-segment-button>
+      </ion-segment>
+
+      <div class="auth-form">
+        <ion-input
+          fill="outline"
+          type="email"
+          placeholder="Email"
+          [(ngModel)]="authEmail"
+          class="custom-input"
+        ></ion-input>
+        <ion-input
+          fill="outline"
+          type="password"
+          placeholder="Password (at least 8 characters)"
+          [(ngModel)]="authPassword"
+          class="custom-input"
+        ></ion-input>
+        <ion-button expand="block" class="primary-cta" (click)="handleAuth()">
+          {{ authMode === 'signup' ? 'Create Account' : 'Log In' }}
+        </ion-button>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- STEP 1: BUDGET SETUP VIEW -->
+  @if (currentUser && !activeBudget) {
+  <div class="setup-container">
+    <div class="setup-card">
+      <p class="user-greeting">Signed in as {{ currentUser.email }}</p>
+      <h2>Set Your Budget</h2>
+      <p class="subtitle">Tap quick amounts below or type your exact allowance.</p>
+
+      <!-- Budget Display Input -->
+      <div class="budget-input-box">
+        <span class="currency-prefix">{{ currency }}</span>
+        <ion-input type="number" placeholder="0" [(ngModel)]="budgetInput" class="big-number-input"></ion-input>
+        @if (budgetInput > 0) {
+        <ion-button fill="clear" size="small" color="medium" (click)="clearBudgetInput()"> Clear </ion-button>
+        }
+      </div>
+
+      <!-- Quick-Tap Increment Pills (+50, +100, etc.) -->
+      <div class="quick-tap-grid">
+        <button class="tap-pill" (click)="incrementBudget(50)">+{{ currency }}50</button>
+        <button class="tap-pill" (click)="incrementBudget(100)">+{{ currency }}100</button>
+        <button class="tap-pill" (click)="incrementBudget(500)">+{{ currency }}500</button>
+        <button class="tap-pill" (click)="incrementBudget(1000)">+{{ currency }}1,000</button>
+      </div>
+
+      <!-- Duration Selector -->
+      <div class="duration-section">
+        <div class="section-label"><ion-icon name="calendar-outline"></ion-icon> Budget Duration</div>
+        <div class="duration-chips">
+          @for (opt of durationOptions; track opt.days) {
+          <button
+            type="button"
+            class="duration-chip"
+            [class.active]="selectedDuration === opt.days"
+            (click)="selectedDuration = opt.days"
+          >
+            {{ opt.label }}
+          </button>
+          }
+        </div>
+      </div>
+
+      <ion-button expand="block" class="primary-cta" (click)="saveBudget()"> Start Tracking </ion-button>
+    </div>
+  </div>
+  }
+
+  <!-- STEP 2: ACTIVE DASHBOARD VIEW -->
+  @if (currentUser && activeBudget) {
+  <div class="dashboard-container">
+    <!-- Hero Summary Card -->
+    <div class="hero-card" [class.danger-state]="remainingBudget < 0">
+      <div class="hero-top">
+        <span class="badge-duration">{{ activeBudget.durationLabel }}</span>
+        <span class="days-left">{{ daysRemaining }} day(s) left</span>
+      </div>
+
+      <div class="balance-display">
+        <span class="balance-label">Remaining Balance</span>
+        <h1>{{ currency }}{{ remainingBudget | number:'1.2-2' }}</h1>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="progress-track">
+        <div class="progress-fill" [style.width.%]="spentPercentage" [class.warning]="spentPercentage >= 80"></div>
+      </div>
+
+      <div class="hero-stats">
+        <div>
+          <small>Total Budget</small>
+          <strong>{{ currency }}{{ activeBudget.totalBudget | number:'1.0-0' }}</strong>
+        </div>
+        <div>
+          <small>Total Spent</small>
+          <strong>{{ currency }}{{ totalSpent | number:'1.0-0' }}</strong>
+        </div>
+        <div>
+          <small>Safe Daily Spend</small>
+          <strong class="gold-text">{{ currency }}{{ dailySafeSpend | number:'1.0-0' }}/day</strong>
+        </div>
+      </div>
+
+      @if (willExceedBudget || remainingBudget < 0) {
+      <div class="budget-warning" role="alert">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+        <div>
+          @if (remainingBudget < 0) {
+          <strong>Budget exceeded</strong>
+          <p>You are over budget by {{ currency }}{{ (totalSpent - activeBudget.totalBudget) | number:'1.0-0' }}.</p>
+          } @else {
+          <strong>You may exceed your budget</strong>
+          <p>
+            At this pace, you may spend {{ currency }}{{ projectedSpending | number:'1.0-0' }} this period, about {{
+            currency }}{{ projectedBudgetOverage | number:'1.0-0' }} over your budget.
+          </p>
+          }
+        </div>
+      </div>
+      }
+    </div>
+
+    <div class="section-card insight-card">
+      <h3><ion-icon name="pie-chart-outline"></ion-icon> Smart Spending Insights</h3>
+      <p>{{ spendingInsight }}</p>
+      <div class="forecast-summary">
+        <div>
+          <small>Estimated next 7 days</small>
+          <strong>{{ currency }}{{ weeklyForecast | number:'1.2-2' }}</strong>
+        </div>
+        <div>
+          <small>7-day budget target</small>
+          <strong>{{ currency }}{{ weeklyBudgetTarget | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+      <p class="insight-disclaimer">
+        Forecast uses your recent 14-day spending trend and is calculated on this device.
+      </p>
+    </div>
+
+    <!-- Pie / Doughnut Chart Card -->
+    <div class="section-card">
+      <div class="card-header">
+        <h3><ion-icon name="pie-chart-outline"></ion-icon> Spending Breakdown</h3>
+        <ion-button fill="clear" size="small" (click)="exportMonthlyCsv()"> Export CSV </ion-button>
+      </div>
+      <div class="chart-wrapper">
+        <canvas #expenseChart></canvas>
+      </div>
+    </div>
+
+    <!-- Add Expense Form Card -->
+    <div class="section-card">
+      <h3>Add Expense</h3>
+
+      <!-- Category Selector Pills -->
+      <div class="category-selector">
+        @for (cat of categories; track cat.name) {
+        <button
+          type="button"
+          class="cat-pill"
+          [class.selected]="expenseCategory === cat.name"
+          [style.--cat-color]="cat.color"
+          (click)="expenseCategory = cat.name"
+        >
+          <ion-icon [name]="cat.icon"></ion-icon>
+          <span>{{ cat.name }}</span>
+        </button>
+        }
+      </div>
+
+      <div class="expense-inputs">
+        <ion-input
+          fill="outline"
+          placeholder="Item note (e.g., Jeepney, Lunch)"
+          [(ngModel)]="expenseTitle"
+          class="custom-input"
+        ></ion-input>
+
+        <div class="amount-row">
+          <ion-input
+            fill="outline"
+            type="number"
+            placeholder="Amount ({{ currency }})"
+            [(ngModel)]="expenseAmount"
+            class="custom-input amount-field"
+          ></ion-input>
+
+          <ion-button class="add-btn" (click)="addExpense()">
+            <ion-icon slot="start" name="add-circle-outline"></ion-icon>
+            Add
+          </ion-button>
+        </div>
+
+        <div class="expense-tools">
+          <ion-button fill="outline" class="qr-btn" (click)="startQrScanner()">
+            <ion-icon slot="start" name="scan-outline"></ion-icon>
+            Scan receipt or payment QR
+          </ion-button>
+        </div>
+
+        <div class="qr-scanner" [hidden]="!qrScannerActive">
+          <video #qrVideo autoplay playsinline muted aria-label="Live receipt QR scanner"></video>
+          <ion-button expand="block" fill="clear" (click)="stopQrScanner()"> Cancel scan </ion-button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h3><ion-icon name="swap-horizontal-outline"></ion-icon> Travel & Shopping Currency Converter</h3>
+      <div class="converter-fields">
+        <ion-input
+          fill="outline"
+          type="number"
+          min="0"
+          placeholder="Amount"
+          [(ngModel)]="conversionAmount"
+          (ionChange)="autoConvertCurrency()"
+          class="custom-input"
+        ></ion-input>
+        <ion-select
+          fill="outline"
+          aria-label="Convert from currency"
+          [(ngModel)]="conversionFrom"
+          (ionChange)="autoConvertCurrency()"
+          interface="popover"
+        >
+          @for (item of currencies; track item.code) {
+          <ion-select-option [value]="item.code">{{ item.code }} - {{ item.name }}</ion-select-option>
+          }
+        </ion-select>
+        <ion-select
+          fill="outline"
+          aria-label="Convert to currency"
+          [(ngModel)]="conversionTo"
+          (ionChange)="autoConvertCurrency()"
+          interface="popover"
+        >
+          @for (item of currencies; track item.code) {
+          <ion-select-option [value]="item.code">{{ item.code }} - {{ item.name }}</ion-select-option>
+          }
+        </ion-select>
+      </div>
+      <ion-button fill="outline" (click)="convertCurrency()">Get latest conversion</ion-button>
+      @if (conversionResult !== null) {
+      <p class="conversion-result">
+        {{ conversionAmount | number:'1.2-2' }} {{ conversionFrom }} =
+        <strong>{{ conversionResult | number:'1.2-2' }} {{ conversionTo }}</strong>
+        @if (conversionRateDate) {
+        <span> (rate date {{ conversionRateDate }})</span>
+        }
+      </p>
+      } @if (conversionError) {
+      <p class="conversion-error" role="alert">{{ conversionError }}</p>
+      }
+      <p class="insight-disclaimer">Indicative rates from Frankfurter; your account balances remain in PHP.</p>
+    </div>
+
+    <div class="section-card report-card">
+      <h3><ion-icon name="download-outline"></ion-icon> Monthly Financial Statement</h3>
+      <label class="section-label" for="report-month">Statement month</label>
+      <ion-input id="report-month" fill="outline" type="month" [(ngModel)]="reportMonth"></ion-input>
+      <p>{{ monthlyExpenses.length }} transaction(s), total {{ currency }}{{ monthlyTotal | number:'1.2-2' }}</p>
+      <div class="report-actions">
+        <ion-button fill="outline" (click)="exportMonthlyCsv()">Download CSV</ion-button>
+        <ion-button fill="outline" (click)="exportMonthlyPdf()">Download PDF</ion-button>
+      </div>
+    </div>
+
+    <div class="section-card theme-settings">
+      <h3>Appearance</h3>
+      <ion-button fill="outline" (click)="toggleDarkMode()">
+        {{ darkMode ? 'Turn off dark mode' : 'Turn on dark mode' }}
+      </ion-button>
+      <ion-select
+        fill="outline"
+        aria-label="Institutional theme"
+        [(ngModel)]="institutionTheme"
+        (ionChange)="setInstitutionTheme($event.detail.value)"
+        interface="popover"
+      >
+        <ion-select-option value="navy">Navy & Gold</ion-select-option>
+        <ion-select-option value="green">Campus Green</ion-select-option>
+        <ion-select-option value="burgundy">Institutional Burgundy</ion-select-option>
+      </ion-select>
+    </div>
+
+    <!-- Recent Expenses List -->
+    <div class="section-card">
+      <h3>Recent Transactions ({{ expenses.length }})</h3>
+
+      @if (expenses.length === 0) {
+      <div class="empty-state">No expenses recorded yet. Add your first expense above!</div>
+      } @else {
+      <ion-list lines="none">
+        @for (item of expenses; track item.id) {
+        <ion-item class="expense-item">
+          <div slot="start" class="cat-avatar" [style.background]="getCategoryColor(item.category)">
+            <ion-icon [name]="getCategoryIcon(item.category)"></ion-icon>
+          </div>
+
+          <ion-label>
+            <h2>{{ item.title }}</h2>
+            <p>{{ item.category }} • {{ item.date | date:'MMM d, h:mm a' }}</p>
+          </ion-label>
+
+          <div slot="end" class="item-right">
+            <span class="expense-cost">-{{ currency }}{{ item.amount | number:'1.2-2' }}</span>
+            <ion-button fill="clear" color="danger" size="small" (click)="deleteExpense(item.id)">
+              <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+            </ion-button>
+          </div>
+        </ion-item>
+        }
+      </ion-list>
+      }
+    </div>
+  </div>
+  }
+</ion-content>

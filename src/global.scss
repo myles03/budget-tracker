@@ -1,0 +1,224 @@
+/*
+ * App Global CSS
+ * ----------------------------------------------------------------------------
+ * Put style rules here that you want to apply globally. These styles are for
+ * the entire app and not just one component. Additionally, this file can be
+ * used as an entry point to import other CSS/Sass files to be included in the
+ * output CSS.
+ * For more information on global stylesheets, visit the documentation:
+ * https://ionicframework.com/docs/layout/global-stylesheets
+ */
+
+/* Core CSS required for Ionic components to work properly */
+@import '@ionic/angular/css/core.css';
+
+/* Basic CSS for apps built with Ionic */
+@import '@ionic/angular/css/normalize.css';
+@import '@ionic/angular/css/structure.css';
+@import '@ionic/angular/css/typography.css';
+@import '@ionic/angular/css/display.css';
+
+/* Optional CSS utils that can be commented out */
+@import '@ionic/angular/css/padding.css';
+@import '@ionic/angular/css/float-elements.css';
+@import '@ionic/angular/css/text-alignment.css';
+@import '@ionic/angular/css/text-transformation.css';
+@import '@ionic/angular/css/flex-utils.css';
+
+/**
+ * Ionic Dark Mode
+ * -----------------------------------------------------
+ * For more info, please see:
+ * https://ionicframework.com/docs/theming/dark-mode
+ */
+
+/* @import "@ionic/angular/css/palettes/dark.always.css"; */
+/* @import "@ionic/angular/css/palettes/dark.class.css"; */
+@import '@ionic/angular/css/palettes/dark.system.css';
+
+.insight-card > p,
+.conversion-result,
+.conversion-error,
+.report-card > p {
+  margin: 12px 0 0;
+  line-height: 1.45;
+}
+
+.insight-card > p,
+.conversion-result,
+.report-card > p {
+  color: #495057;
+}
+
+.insight-card .forecast-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.insight-card .forecast-summary div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #eef3f8;
+}
+
+.insight-card .forecast-summary small {
+  color: #6c757d;
+}
+
+.insight-card .forecast-summary strong,
+.conversion-result strong {
+  color: #002d5b;
+}
+
+.insight-card .insight-disclaimer,
+.conversion-error {
+  font-size: 0.78rem;
+  color: #6c757d;
+}
+
+.conversion-error {
+  color: #c92a2a;
+}
+
+.converter-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.converter-fields .custom-input,
+.converter-fields ion-select,
+.report-card ion-input,
+.theme-settings ion-select {
+  min-width: 0;
+  --background: #f8f9fa;
+  --color: #1a1a1a;
+}
+
+.report-card ion-input {
+  border-radius: 10px;
+}
+
+.report-card .section-label {
+  display: block;
+  margin: 0 0 8px;
+  color: #495057;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.report-card .report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.theme-settings {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.theme-settings h3 {
+  grid-column: 1 / -1;
+  margin-bottom: 4px;
+}
+
+.theme-settings ion-select {
+  min-width: 150px;
+}
+
+.custom-header.theme-dark {
+  --background: #111827 !important;
+}
+
+.custom-header.theme-green {
+  --background: #14532d !important;
+}
+
+.custom-header.theme-burgundy {
+  --background: #6b1736 !important;
+}
+
+ion-content.theme-dark {
+  --background: #111827 !important;
+  --color: #f9fafb !important;
+}
+
+ion-content.theme-dark .section-card,
+ion-content.theme-dark .setup-card {
+  background: #1f2937;
+  color: #f9fafb;
+}
+
+ion-content.theme-dark .section-card h3,
+ion-content.theme-dark .insight-card .forecast-summary strong,
+ion-content.theme-dark .conversion-result strong {
+  color: #f9fafb;
+}
+
+ion-content.theme-dark .section-card p,
+ion-content.theme-dark .report-card .section-label {
+  color: #d1d5db;
+}
+
+ion-content.theme-dark .insight-card .forecast-summary div,
+ion-content.theme-dark .expense-item,
+ion-content.theme-dark ion-list {
+  --background: #273449;
+  background: #273449 !important;
+}
+
+ion-content.theme-dark .expense-item ion-label,
+ion-content.theme-dark .expense-item ion-label h2,
+ion-content.theme-dark .expense-item ion-label p {
+  color: #f9fafb !important;
+}
+
+ion-content.theme-dark .custom-input,
+ion-content.theme-dark ion-select,
+ion-content.theme-dark ion-input {
+  --background: #273449 !important;
+  --color: #f9fafb !important;
+  --placeholder-color: #cbd5e1 !important;
+}
+
+ion-content.theme-dark .cat-pill {
+  background: #273449;
+  color: #f9fafb;
+  border-color: #475569;
+}
+
+ion-content.theme-green .primary-cta,
+ion-content.theme-green .add-btn {
+  --background: #14532d;
+}
+
+ion-content.theme-green .section-card h3,
+ion-content.theme-green .conversion-result strong {
+  color: #14532d;
+}
+
+ion-content.theme-burgundy .primary-cta,
+ion-content.theme-burgundy .add-btn {
+  --background: #6b1736;
+}
+
+ion-content.theme-burgundy .section-card h3,
+ion-content.theme-burgundy .conversion-result strong {
+  color: #6b1736;
+}
+
+@media (max-width: 420px) {
+  .converter-fields,
+  .theme-settings {
+    grid-template-columns: 1fr;
+  }
+}
