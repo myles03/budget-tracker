@@ -29,8 +29,12 @@ jobs:
           npm install --legacy-peer-deps
           npm run build
 
-      - name: Sync Capacitor Android
-        run: npx cap sync android
+      - name: Generate fresh Android platform and enable HTTP
+        run: |
+          rm -rf android
+          npx cap add android
+          sed -i 's/<application/<application android:usesCleartextTraffic="true"/g' android/app/src/main/AndroidManifest.xml
+          npx cap sync android
 
       - name: Build Debug APK
         run: |
